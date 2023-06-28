@@ -4,6 +4,7 @@ Copyright © 2023 Gaetan Jonathan BAKARY gaetan.s118@gmail.com
 package cmd
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -13,16 +14,17 @@ import (
 var rootCmd = &cobra.Command{
 	Use:   "rafaleo",
 	Short: "generate fake data in your database used for load testing",
-	Long: `
-	
-	
+	Long: `rafaleo is a tool that generates fake data in your database used for load testing.
 	`,
 	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
+	// 	Run: func(cmd *cobra.Command, args []string) {
+	// 		// show config file
+
+	// },
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
+var configFile string
+
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
@@ -31,13 +33,9 @@ func Execute() {
 }
 
 func init() {
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
-	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.rafal.yaml)")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	dir, err := os.Getwd()
+	if err != nil {
+		dir = "."
+	}
+	rootCmd.PersistentFlags().StringVar(&configFile, "config", "", fmt.Sprintf("config file (default is %s/rafaleofile.yaml)", dir))
 }

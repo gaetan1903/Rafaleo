@@ -1,0 +1,32 @@
+version: ""
+schemas:
+  - name: ""
+    columns:
+      - name: ""
+        type: ""
+        min_length: 
+        max_length: 
+        faker: ""
+        foreign_key: ""
+        optional: false
+provider:
+  rest:
+    name: ""
+    url: ""
+    entity_endpoint:
+      schema_name: ""
+      path: ""
+    method: ""
+    headers:
+      - name: ""
+        value: ""
+  database:
+    name: ""
+    host: ""
+    port: 
+    user: ""
+    password: ""
+    database: ""
+  sqlite:
+    name: ""
+    path: ""

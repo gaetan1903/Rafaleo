@@ -18,7 +18,7 @@ type Column struct {
 	MaxLength  int    `yaml:"max_length,omitempty"`
 	Faker      string `yaml:"faker,omitempty"`
 	ForeignKey string `yaml:"foreign_key,omitempty"`
-	Optional   bool   `yaml:"optional"`
+	Optional   bool   `yaml:"optional,omitempty"`
 }
 
 type Provider interface {
@@ -26,7 +26,6 @@ type Provider interface {
 }
 
 type RestConfig struct {
-	Name           string   `yaml:"name"`
 	URL            string   `yaml:"url"`
 	EntityEndpoint Endpoint `yaml:"entity_endpoint"`
 	Method         string   `yaml:"method"`

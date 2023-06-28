@@ -15,7 +15,6 @@ schemas:
 
 provider:
   rest:
-    name: ""
     url: ""
     entity_endpoint:
       schema_name: ""

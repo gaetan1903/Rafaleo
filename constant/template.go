@@ -14,6 +14,8 @@ schemas:
         optional: false
 
 provider:
+  type: "database"
+  
   rest:
     url: ""
     entity_endpoint:

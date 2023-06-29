@@ -5,6 +5,7 @@ go 1.20
 require github.com/spf13/cobra v1.6.1
 
 require (
+	github.com/brianvoe/gofakeit/v6 v6.22.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect

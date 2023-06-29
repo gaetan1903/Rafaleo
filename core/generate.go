@@ -9,9 +9,81 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func trt_data(contents []byte) {
-	// Créer une instance de Configuration pour stocker les données YAML
-	var config structure.Configuration
+func reverseSlice(s []structure.Schema) []structure.Schema {
+	length := len(s)
+	reversed := make([]structure.Schema, length)
+
+	for i, v := range s {
+		reversed[length-i-1] = v
+	}
+
+	return reversed
+}
+
+func SortSchemabyForeignKey(config *structure.Configuration) {
+	// Créer une map pour stocker les schémas
+	schemas := make(map[string]structure.Schema)
+
+	// Extraire les schémas
+	for _, schema := range config.Schemas {
+		schemas[schema.Name] = schema
+	}
+
+	// Créer une variable pour stocker les schémas triés
+	var sortedSchemas []structure.Schema
+
+	// Fonction récursive pour trier les schémas par dépendances
+	var sortDependencies func(schema structure.Schema)
+	sortDependencies = func(schema structure.Schema) {
+		// Parcourir les colonnes du schéma
+		for _, column := range schema.Columns {
+			// Vérifier si la colonne a une clé étrangère
+			if column.ForeignKey != "" {
+				// Récupérer le schéma dépendant
+				dependentSchema := schemas[column.ForeignKey]
+
+				// Vérifier si le schéma dépendant n'est pas déjà dans la liste des schémas triés
+				found := false
+				for _, s := range sortedSchemas {
+					if s.Name == dependentSchema.Name {
+						found = true
+						break
+					}
+				}
+
+				// Si le schéma dépendant n'est pas déjà dans la liste des schémas triés, le trier (récursivement)
+				if !found {
+					sortDependencies(dependentSchema)
+					sortedSchemas = append(sortedSchemas, dependentSchema)
+				}
+			}
+		}
+
+		// Vérifier si le schéma courant n'est pas déjà dans la liste des schémas triés
+		found := false
+		for _, s := range sortedSchemas {
+			if s.Name == schema.Name {
+				found = true
+				break
+			}
+		}
+
+		// Si le schéma courant n'est pas déjà dans la liste des schémas triés, l'ajouter
+		if !found {
+			sortedSchemas = append(sortedSchemas, schema)
+		}
+	}
+
+	// Trier les schémas par dépendances
+	for _, schema := range schemas {
+		sortDependencies(schema)
+	}
+
+	// Assigner les schémas triés à la configuration
+	config.Schemas = reverseSlice(sortedSchemas)
+}
+
+func trt_data(contents []byte, config *structure.Configuration) error {
 
 	// Créer une variable temporaire pour stocker les données YAML
 	var yamlData map[string]interface{}
@@ -20,6 +92,7 @@ func trt_data(contents []byte) {
 	err := yaml.Unmarshal(contents, &yamlData)
 	if err != nil {
 		log.Fatalf("Erreur lors de l'analyse du contenu YAML : %v", err)
+		return err
 	}
 
 	// Extraire les valeurs du YAML et les assigner à la structure de configuration
@@ -65,6 +138,7 @@ func trt_data(contents []byte) {
 			restConfig.Headers = append(restConfig.Headers, header)
 		}
 		config.Provider = restConfig
+		config.ProviderType = "rest"
 	case "database":
 		databaseConfig := structure.DatabaseConfig{
 			Name:     providerData["name"].(string),
@@ -75,59 +149,19 @@ func trt_data(contents []byte) {
 			DbType:   providerData["db_type"].(string),
 		}
 		config.Provider = databaseConfig
+		config.ProviderType = "database"
 	case "sqlite":
 		sqliteConfig := structure.SqLiteConfig{
 			Name: providerData["name"].(string),
 			Path: providerData["path"].(string),
 		}
 		config.Provider = sqliteConfig
+		config.ProviderType = "sqlite"
 	default:
 		log.Fatalf("Fournisseur inconnu : %s", providerData["type"].(string))
 	}
 
-	// Afficher les données extraites
-	fmt.Printf("Version: %s\n", config.Version)
-	fmt.Println("Schemas:")
-	for _, schema := range config.Schemas {
-		fmt.Printf("- Name: %s\n", schema.Name)
-		fmt.Println("  Columns:")
-		for _, column := range schema.Columns {
-			fmt.Printf("  - Name: %s\n", column.Name)
-			fmt.Printf("    Type: %s\n", column.Type)
-			fmt.Printf("    Optional: %t\n", column.Optional)
-		}
-	}
-
-	// Afficher les données spécifiques au fournisseur
-	switch provider := config.Provider.(type) {
-	case structure.RestConfig:
-		fmt.Println("Provider: REST")
-		fmt.Printf("URL: %s\n", provider.URL)
-		fmt.Println("EntityEndpoint:")
-		fmt.Printf("  SchemaName: %s\n", provider.EntityEndpoint.SchemaName)
-		fmt.Printf("  Path: %s\n", provider.EntityEndpoint.Path)
-		fmt.Printf("Method: %s\n", provider.Method)
-		fmt.Println("Headers:")
-		for _, header := range provider.Headers {
-			fmt.Printf("  - Name: %s\n", header.Name)
-			fmt.Printf("    Value: %s\n", header.Value)
-		}
-	case structure.DatabaseConfig:
-		fmt.Println("Provider: Database")
-		fmt.Printf("DbType: %s\n", provider.DbType)
-		fmt.Printf("Name: %s\n", provider.Name)
-		fmt.Printf("Host: %s\n", provider.Host)
-		fmt.Printf("Port: %d\n", provider.Port)
-		fmt.Printf("User: %s\n", provider.User)
-		fmt.Printf("Password: %s\n", provider.Password)
-	case structure.SqLiteConfig:
-		fmt.Println("Provider: SQLite")
-		fmt.Printf("Name: %s\n", provider.Name)
-		fmt.Printf("Path: %s\n", provider.Path)
-	default:
-		fmt.Println("Provider: Unknown")
-	}
-
+	return nil
 }
 
 func Generate(configFile string) {
@@ -156,6 +190,11 @@ func Generate(configFile string) {
 		return
 	}
 
-	trt_data(contents)
+	// Créer une instance de Configuration pour stocker les données YAML
+	var config structure.Configuration
+
+	trt_data(contents, &config)
+
+	SortSchemabyForeignKey(&config)
 
 }

@@ -1,9 +1,10 @@
 package structure
 
 type Configuration struct {
-	Version  string   `yaml:"version"`
-	Schemas  []Schema `yaml:"schemas"`
-	Provider Provider `yaml:"provider"`
+	Version      string   `yaml:"version"`
+	Schemas      []Schema `yaml:"schemas"`
+	ProviderType string   `yaml:"provider_type"`
+	Provider     Provider `yaml:"provider"`
 }
 
 type Schema struct {
